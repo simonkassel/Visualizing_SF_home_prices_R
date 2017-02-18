@@ -87,7 +87,7 @@ palette_1_colors <- c("#0DA3A0")
 # Read in the csv of home sale transactions 
 sf <- read.csv("https://raw.githubusercontent.com/simonkassel/Visualizing_SF_home_prices_R/master/Data/SF_home_sales_demo_data.csv")
 
-# convert sale year to a factor
+#convert sale year to a factor
 sf$SaleYr <- as.factor(sf$SaleYr)
 
 # Download polygon shapefile from github
@@ -98,25 +98,24 @@ neighb <- readShapePoly("SF_neighborhoods")
 
 #Let's look at the distribution of home values
 home_value_hist <- ggplot(sf, aes(SalePrice)) + 
-  geom_histogram(fill=palette_1_colors) +
+  geom_histogram(fill=pallete_1_colors) +
   xlab("Sale Price($)") + ylab("Count") +
-  scale_fill_manual(values=palette_1_colors) +
+  scale_fill_manual(values=pallete_1_colors) +
   plotTheme() + 
   labs(x="Sale Price($)", y="Count", title="Distribution of San Francisco home prices",
-     subtitle="Nominal prices (2009 - 2015)", 
-     caption="Source: San Francisco Office of the Assessor-Recorder\n@KenSteif & @SimonKassel") +
+       subtitle="Nominal prices (2009 - 2015)", 
+       caption="Source: San Francisco Office of the Assessor-Recorder\n@KenSteif & @SimonKassel") +
   scale_x_continuous(labels = comma) + scale_y_continuous(labels = comma)
-
 home_value_hist
 ggsave("plot1_histogram.png", home_value_hist, width = 8, height = 4, device = "png")
 
 # Seems like there are some outliers so lets remove anything greater than 2.5 st. deviations from the mean
 sf <- sf[which(sf$SalePrice < mean(sf$SalePrice) + (2.5 * sd(sf$SalePrice))), ]
-  
+
 #violin plots
 home_value_violin <- ggplot(sf, aes(x=SaleYr, y=SalePrice, fill=SaleYr)) + geom_violin(color = "grey50") +
   xlab("Sale Price($)") + ylab("Count") +
-  scale_fill_manual(values=palette_7_colors) +
+  scale_fill_manual(values=pallete_7_colors) +
   stat_summary(fun.y=mean, geom="point", size=2, colour="white") +
   plotTheme() + theme(legend.position="none") +
   scale_y_continuous(labels = comma) +
@@ -127,29 +126,26 @@ home_value_violin
 ggsave("plot2_violin.png", home_value_violin, width = 8, height = 4, device = "png")
 
 
-# BASEMAP -----------------------------------------------------------------
+# BASEMAPS ----------------------------------------------------------------
 
 # Create a bouding box
 bbox <- neighb@bbox
-
-# add a margin between the extent of our data the edge of the basemap
+# Add a margin between the extent of our data the edge of the basemap
 sf_bbox <- c(left = bbox[1, 1] - .01, bottom = bbox[2, 1] - .005, 
              right = bbox[1, 2] + .01, top = bbox[2, 2] + .005)
-
+# General basemap
 basemap <- get_stamenmap(
   bbox = sf_bbox,
   zoom = 13,
   maptype = "toner-lite")
 
 bmMap <- ggmap(basemap) + mapTheme() + 
-  labs(title="San Francisco basemap"
-       )
+  labs(title="San Francisco basemap")
 bmMap
 ggsave("plot3_basemap.png", bmMap, width = 6, height = 6, device = "png")
 
-
 # MAPPING POINTS ----------------------------------------------------------
-#let's map the sale prices per year
+# Let's map the sale prices per year
 prices_mapped_by_year <- ggmap(basemap) + 
   geom_point(data = sf, aes(x = long, y = lat, color = SalePrice), 
              size = .25, alpha = 0.6) +
@@ -157,7 +153,7 @@ prices_mapped_by_year <- ggmap(basemap) +
   coord_map() +
   mapTheme() + theme(legend.position = c(.85, .25)) +
   scale_color_gradientn("Sale Price", 
-                        colors = palette_8_colors,
+                        colors = pallete_8_colors,
                         labels = scales::dollar_format(prefix = "$")) +
   labs(title="Distribution of San Francisco home prices",
        subtitle="Nominal prices (2009 - 2015)",
@@ -166,7 +162,7 @@ prices_mapped_by_year
 ggsave("plot4_point map.png", prices_mapped_by_year, width = 8, height = 4, device = "png")
 
 
-#Thats a lot of information. Let's subset to get just two years. We'll stack them this time and increase the point size
+# Thats a lot of information. Let's subset to get just two years. We'll stack them this time and increase the point size
 prices_mapped_2009_2015 <- ggmap(basemap) + 
   geom_point(data = subset(sf, sf$SaleYr == 2015 | sf$SaleYr == 2009), aes(x = long, y = lat, color = SalePrice), 
              size = 1, alpha = 0.75) +
@@ -174,13 +170,39 @@ prices_mapped_2009_2015 <- ggmap(basemap) +
   coord_map() +
   mapTheme() +
   scale_color_gradientn("Sale Price", 
-                        colors = palette_8_colors,
+                        colors = pallete_8_colors,
                         labels = scales::dollar_format(prefix = "$")) +
   labs(title="Distribution of San Francisco home prices",
        subtitle="Nominal prices (2009 & 2015)",
        caption="Source: San Francisco Office of the Assessor-Recorder\n@KenSteif & @SimonKassel")
 prices_mapped_2009_2015
 ggsave("plot5_point map selected years.png", prices_mapped_2009_2015, width = 7, height = 5, device = "png")
+
+# Let's look at just one neighborhood: The Mission District
+#   Data set of just sales for the "Inner Mission neighborhood"
+missionSales <- sf[which(sf$Neighborhood == "Inner Mission"), ]
+
+#   We'll need a new basemap at the appropriate scale
+centroid_lon <- median(missionSales$long)
+centroid_lat <- median(missionSales$lat)
+missionBasemap <- get_map(location = c(lon = centroid_lon, lat = centroid_lat), source = "stamen",
+                          maptype = "toner-lite", zoom = 15)
+
+#   Map these by year
+mission_mapped_by_year <- ggmap(missionBasemap) + 
+  geom_point(data = missionSales, aes(x = long, y = lat, color = SalePrice), 
+             size = 2) +
+  facet_wrap(~SaleYr, scales = "fixed", ncol = 4) +
+  coord_map() +
+  mapTheme() + theme(legend.position = c(.85, .25)) +
+  scale_color_gradientn("Sale Price", 
+                        colors = pallete_8_colors,
+                        labels = scales::dollar_format(prefix = "$")) +
+  labs(title="Distribution of Mission District home prices",
+       subtitle="Nominal prices (2009 - 2015)",
+       caption="Source: San Francisco Office of the Assessor-Recorder\n@KenSteif & @SimonKassel")
+mission_mapped_by_year
+ggsave("plot6_point map Mission District.png", mission_mapped_by_year, width = 8, height = 4, device = "png")
 
 
 # PLOTTING POLYGONS --------------------------------------------------------
@@ -225,7 +247,7 @@ neighb_map <- ggmap(basemap) +
   geom_polygon(data = sf.summarized_tidy, aes(x = long, y = lat, group = group, fill = medianPrice), 
                colour = "white", alpha = 0.75, size = 0.25) + 
   scale_fill_gradientn("Neighborhood \nMedian \nSale Price", 
-                       colors = palette_8_colors,
+                       colors = pallete_8_colors,
                        labels = scales::dollar_format(prefix = "$")) +
   mapTheme() + theme(legend.position = c(.85, .25)) + coord_map() +
   facet_wrap(~SaleYr, nrow = 2) +
@@ -233,7 +255,7 @@ neighb_map <- ggmap(basemap) +
        subtitle="Nominal prices (2009 - 2015)",
        caption="Source: San Francisco Office of the Assessor-Recorder\n@KenSteif & @SimonKassel")
 neighb_map
-ggsave("plot6_neighborhood home value.png", neighb_map, width = 8, height = 6, device = "png")
+ggsave("plot7_neighborhood home value.png", neighb_map, width = 8, height = 6, device = "png")
 
 # Plot the percent change in neighborhood median home value over time
 change_map <- ggmap(basemap) +
@@ -241,7 +263,7 @@ change_map <- ggmap(basemap) +
                aes(x = long, y = lat, group = group, fill = pctChange), 
                colour = "white", alpha = 0.75, size = 0.25) + 
   coord_map() +
-  scale_fill_gradientn("% Change", colors = palette_8_colors,
+  scale_fill_gradientn("% Change", colors = pallete_8_colors,
                        labels = scales::percent_format()) +
   mapTheme() + 
   theme(legend.position = "bottom", 
@@ -251,7 +273,7 @@ change_map <- ggmap(basemap) +
        subtitle="Nominal prices (2009 - 2015)",
        caption="Source: San Francisco Office of the Assessor-Recorder\nNeighborhoods with too few annual transactions are withheld\n@KenSteif & @SimonKassel")
 change_map
-ggsave("plot7_change over time.png", change_map, width = 7, height = 7, device = "png")
+ggsave("plot8_change over time.png", change_map, width = 7, height = 7, device = "png")
 
 # SAMPLE NEIGHBORHOOD TIME SERIES -----------------------------------------
 # Select the neighborhoods with the highest rates of change
@@ -269,17 +291,17 @@ change_scatterplot <- ggplot(sf.2009, aes(x = pctChange, y = medianPrice, label 
              aes(label = Neighborhood), fill = "grey20", size = 2, color = "white") +
   geom_label(data = sf.2009[which(sf.2009$pctChange %in% topPctChange),], 
              aes(label = Neighborhood, fill = Neighborhood), size = 2, color = "white") +
-  scale_fill_manual(values=palette_9_colors) +
+  scale_fill_manual(values=pallete_9_colors) +
   geom_smooth(method = "lm", se = FALSE) +
   plotTheme() + theme(legend.position = "none") +
   scale_y_continuous(labels = dollar_format(prefix = "$")) + 
-  scale_x_continuous(labels = percent) +
-  labs(x="Change", y="Median Sale Price",
+  scale_x_continuous(labels = percent, limits = c(min(sf.2009$pctChange - .04), max(sf.2009$pctChange + .025)) ) +
+  labs(x="% Change", y="Median Sale Price (2009)",
        title="Change in home price as a function of initial price",
        subtitle="Median price; Change between 2009 - 2015",
        caption="Source: San Francisco Office of the Assessor-Recorder\n@KenSteif & @SimonKassel")
 change_scatterplot
-ggsave("plot8_scatterplot.png", change_scatterplot, width = 8, height = 6, device = "png")
+ggsave("plot9_scatterplot.png", change_scatterplot, width = 8, height = 6, device = "png")
 
 # Plot time series
 time.series <- ggplot(sfForTimeSeries, aes(x = SaleYr, group=Neighborhood)) +
@@ -292,13 +314,13 @@ time.series <- ggplot(sfForTimeSeries, aes(x = SaleYr, group=Neighborhood)) +
   theme(
     legend.position = "none",
     panel.spacing.y = unit(1, "lines")
-       ) +
-  scale_fill_manual(values=palette_8_colors) +
+  ) +
+  scale_fill_manual(values=pallete_8_colors) +
   labs(title="Time series for highest growth neighborhoods, San Francisco",
        subtitle="Nominal prices (2009-2015); Median; Ribbon indicates 1 standard deviation",
        caption="Source: San Francisco Office of the Assessor-Recorder\n@KenSteif & @SimonKassel")
 time.series 
-ggsave("plot9_time series.png", time.series, width = 6, height = 8, device = "png")
+ggsave("plot10_time series.png", time.series, width = 6, height = 8, device = "png")
 
 
 # Plot the neighborhoods
@@ -309,7 +331,7 @@ sampleNeighborhoods <- ggmap(basemap) +
                aes(x = long, y = lat, group = group, fill = Neighborhood), 
                colour = "black") +
   coord_map() +
-  scale_fill_manual(values=palette_9_colors)+
+  scale_fill_manual(values=pallete_9_colors)+
   mapTheme() + 
   theme(legend.position = "bottom", 
         legend.direction = "horizontal", 
@@ -317,7 +339,7 @@ sampleNeighborhoods <- ggmap(basemap) +
         legend.title=element_blank()) +
   guides(fill=guide_legend(ncol = 2))
 sampleNeighborhoods
-ggsave("plot10_sample neighborhoods.png", sampleNeighborhoods, width = 6, height = 6, device = "png")
+ggsave("plot11_sample neighborhoods.png", sampleNeighborhoods, width = 6, height = 6, device = "png")
 
 #Create grob list
 # we'll create a blank grob
@@ -332,5 +354,4 @@ lay <- rbind(c(1,1,2),
              c(1,1,2),
              c(1,1,2))
 arranged_plot <- grid.arrange(grobs = gs, layout_matrix = lay)
-arranged_plot
-ggsave("plot11_time series with map.png", g, width = 11.6, height = 10, device = "png")
+ggsave("plot12_time series with map.png", arranged_plot, width = 11.6, height = 10, device = "png")
