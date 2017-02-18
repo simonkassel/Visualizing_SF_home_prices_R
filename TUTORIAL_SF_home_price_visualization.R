@@ -1,28 +1,41 @@
-# R MAPPING TUTORIAL ------------------------------------------------------
+# R MAPPING/DATA VIZ TUTORIAL ---------------------------------------------
+
 # Simon Kassel & Ken Steif
 
 # GLOBAL OPTIONS ----------------------------------------------------------
-
-options(scipen = "999")
+# Turn off scientific notation
+options(scipen = "999") 
+# Ensure strings come in as character types
 options(stringsAsFactors = FALSE)
 
 # PACKAGES ----------------------------------------------------------------
-for (p in c("ggplot2", "ggmap", "RColorBrewer", "maptools",
-            "ggthemes", "scales", "broom", "rgeos", "dplyr",
-            "plyr", "lubridate", "grid", "gridExtra",
-            "reshape2")) {
-  if (!requireNamespace(p, quietly = TRUE))
-    install.packages(p)
-  suppressMessages(library(p, character.only = TRUE))
-} 
+# Install packages
+# *note: you must have installed each of these packages before loading them
+library(ggplot2)
+library(ggmap)
+library(maptools)
+library(ggthemes)
+library(rgeos)
+library(broom)
+library(dplyr)
+library(plyr)
+library(grid)
+library(gridExtra)
+library(reshape2)
 
 # DEFINE THEMES -----------------------------------------------------------
+# The ggplot2 theme system allows you to customize most visual elements of
+# a plot. As you can see, we will want to modify many theme elements for
+# each plot. Rather than repeat this code for every plot or map we will 
+# define functions that specify theme templates for a plot.
+
+# Define one that we will use for plots
 plotTheme <- function(base_size = 12) {
   theme(
     text = element_text( color = "black"),
     plot.title = element_text(size = 18,colour = "black"),
-    plot.subtitle=element_text(face="italic"),
-    plot.caption=element_text(hjust=0),
+    plot.subtitle = element_text(face="italic"),
+    plot.caption = element_text(hjust=0),
     axis.ticks = element_blank(),
     panel.background = element_blank(),
     panel.grid.major = element_line("grey80", size = 0.1),
@@ -39,6 +52,7 @@ plotTheme <- function(base_size = 12) {
     legend.text = element_text(colour = "black", face = "italic"))
 }
 
+# And another that we will use for maps
 mapTheme <- function(base_size = 12) {
   theme(
     text = element_text( color = "black"),
@@ -61,17 +75,19 @@ mapTheme <- function(base_size = 12) {
     legend.text = element_text(colour = "black", face = "italic"))
 }
 
-#were going to use these custom palettes
-pallete_9_colors <- c("#0DA3A0","#2999A9","#458FB2","#6285BB","#7E7CC4","#9A72CD","#B768D6","#D35EDF","#F055E9")
-pallete_8_colors <- c("#0DA3A0","#2D97AA","#4D8CB4","#6E81BF","#8E76C9","#AF6BD4","#CF60DE","#F055E9")
-pallete_7_colors <- c("#2D97AA","#4D8CB4","#6E81BF","#8E76C9","#AF6BD4","#CF60DE","#F055E9")
-pallete_1_colors <- c("#0DA3A0")
+# We will also use a specific palette including the colors listed below. 
+# As you will find out, we will need palettes of different lengths for
+# different purposes. 
+palette_9_colors <- c("#0DA3A0","#2999A9","#458FB2","#6285BB","#7E7CC4","#9A72CD","#B768D6","#D35EDF","#F055E9")
+palette_8_colors <- c("#0DA3A0","#2D97AA","#4D8CB4","#6E81BF","#8E76C9","#AF6BD4","#CF60DE","#F055E9")
+palette_7_colors <- c("#2D97AA","#4D8CB4","#6E81BF","#8E76C9","#AF6BD4","#CF60DE","#F055E9")
+palette_1_colors <- c("#0DA3A0")
 
 # DATA --------------------------------------------------------------------
-# Home sales
+# Read in the csv of home sale transactions 
 sf <- read.csv("https://raw.githubusercontent.com/simonkassel/Visualizing_SF_home_prices_R/master/Data/SF_home_sales_demo_data.csv")
 
-#convert sale year to a factor
+# convert sale year to a factor
 sf$SaleYr <- as.factor(sf$SaleYr)
 
 # Download polygon shapefile from github
@@ -82,14 +98,15 @@ neighb <- readShapePoly("SF_neighborhoods")
 
 #Let's look at the distribution of home values
 home_value_hist <- ggplot(sf, aes(SalePrice)) + 
-  geom_histogram(fill=pallete_1_colors) +
+  geom_histogram(fill=palette_1_colors) +
   xlab("Sale Price($)") + ylab("Count") +
-  scale_fill_manual(values=pallete_1_colors) +
+  scale_fill_manual(values=palette_1_colors) +
   plotTheme() + 
   labs(x="Sale Price($)", y="Count", title="Distribution of San Francisco home prices",
      subtitle="Nominal prices (2009 - 2015)", 
      caption="Source: San Francisco Office of the Assessor-Recorder\n@KenSteif & @SimonKassel") +
   scale_x_continuous(labels = comma) + scale_y_continuous(labels = comma)
+
 home_value_hist
 ggsave("plot1_histogram.png", home_value_hist, width = 8, height = 4, device = "png")
 
@@ -99,7 +116,7 @@ sf <- sf[which(sf$SalePrice < mean(sf$SalePrice) + (2.5 * sd(sf$SalePrice))), ]
 #violin plots
 home_value_violin <- ggplot(sf, aes(x=SaleYr, y=SalePrice, fill=SaleYr)) + geom_violin(color = "grey50") +
   xlab("Sale Price($)") + ylab("Count") +
-  scale_fill_manual(values=pallete_7_colors) +
+  scale_fill_manual(values=palette_7_colors) +
   stat_summary(fun.y=mean, geom="point", size=2, colour="white") +
   plotTheme() + theme(legend.position="none") +
   scale_y_continuous(labels = comma) +
@@ -140,7 +157,7 @@ prices_mapped_by_year <- ggmap(basemap) +
   coord_map() +
   mapTheme() + theme(legend.position = c(.85, .25)) +
   scale_color_gradientn("Sale Price", 
-                        colors = pallete_8_colors,
+                        colors = palette_8_colors,
                         labels = scales::dollar_format(prefix = "$")) +
   labs(title="Distribution of San Francisco home prices",
        subtitle="Nominal prices (2009 - 2015)",
@@ -157,7 +174,7 @@ prices_mapped_2009_2015 <- ggmap(basemap) +
   coord_map() +
   mapTheme() +
   scale_color_gradientn("Sale Price", 
-                        colors = pallete_8_colors,
+                        colors = palette_8_colors,
                         labels = scales::dollar_format(prefix = "$")) +
   labs(title="Distribution of San Francisco home prices",
        subtitle="Nominal prices (2009 & 2015)",
@@ -208,7 +225,7 @@ neighb_map <- ggmap(basemap) +
   geom_polygon(data = sf.summarized_tidy, aes(x = long, y = lat, group = group, fill = medianPrice), 
                colour = "white", alpha = 0.75, size = 0.25) + 
   scale_fill_gradientn("Neighborhood \nMedian \nSale Price", 
-                       colors = pallete_8_colors,
+                       colors = palette_8_colors,
                        labels = scales::dollar_format(prefix = "$")) +
   mapTheme() + theme(legend.position = c(.85, .25)) + coord_map() +
   facet_wrap(~SaleYr, nrow = 2) +
@@ -224,7 +241,7 @@ change_map <- ggmap(basemap) +
                aes(x = long, y = lat, group = group, fill = pctChange), 
                colour = "white", alpha = 0.75, size = 0.25) + 
   coord_map() +
-  scale_fill_gradientn("% Change", colors = pallete_8_colors,
+  scale_fill_gradientn("% Change", colors = palette_8_colors,
                        labels = scales::percent_format()) +
   mapTheme() + 
   theme(legend.position = "bottom", 
@@ -252,7 +269,7 @@ change_scatterplot <- ggplot(sf.2009, aes(x = pctChange, y = medianPrice, label 
              aes(label = Neighborhood), fill = "grey20", size = 2, color = "white") +
   geom_label(data = sf.2009[which(sf.2009$pctChange %in% topPctChange),], 
              aes(label = Neighborhood, fill = Neighborhood), size = 2, color = "white") +
-  scale_fill_manual(values=pallete_9_colors) +
+  scale_fill_manual(values=palette_9_colors) +
   geom_smooth(method = "lm", se = FALSE) +
   plotTheme() + theme(legend.position = "none") +
   scale_y_continuous(labels = dollar_format(prefix = "$")) + 
@@ -276,7 +293,7 @@ time.series <- ggplot(sfForTimeSeries, aes(x = SaleYr, group=Neighborhood)) +
     legend.position = "none",
     panel.spacing.y = unit(1, "lines")
        ) +
-  scale_fill_manual(values=pallete_8_colors) +
+  scale_fill_manual(values=palette_8_colors) +
   labs(title="Time series for highest growth neighborhoods, San Francisco",
        subtitle="Nominal prices (2009-2015); Median; Ribbon indicates 1 standard deviation",
        caption="Source: San Francisco Office of the Assessor-Recorder\n@KenSteif & @SimonKassel")
@@ -292,7 +309,7 @@ sampleNeighborhoods <- ggmap(basemap) +
                aes(x = long, y = lat, group = group, fill = Neighborhood), 
                colour = "black") +
   coord_map() +
-  scale_fill_manual(values=pallete_9_colors)+
+  scale_fill_manual(values=palette_9_colors)+
   mapTheme() + 
   theme(legend.position = "bottom", 
         legend.direction = "horizontal", 
