@@ -192,9 +192,9 @@ ggsave("plot6_point map Mission District.png", mission_mapped_by_year, width = 8
 # PLOTTING POLYGONS --------------------------------------------------------
 
 # Convert neighborhood sp object to a format ggplot can handle
-neighb.fort <- tidy(neighb, region = c('nbrhood'))
-neighb.fort$nbrhood <- neighb.fort$id
-neighb.fort$Neighborhood <- neighb.fort$id
+neighb.tidy <- tidy(neighb, region = c('nbrhood'))
+neighb.tidy$nbrhood <- neighb.tidy$id
+neighb.tidy$Neighborhood <- neighb.tidy$id
 
 # Summarize the data by neighborhood and sale year
 #----what are you calculating and why?
@@ -224,7 +224,7 @@ sf.summarized <- join(sf.summarized, medByYear[,c("Neighborhood", "pctChange")],
 sf.summarized$pctChange <- ifelse(sf.summarized$avg.yearly.sales < 10, NA, sf.summarized$pctChange)
 
 # for ggplot polygon mapping - why?#########
-sf.summarized_tidy <- join(sf.summarized, neighb.fort, by = "Neighborhood", match = "all")
+sf.summarized_tidy <- join(sf.summarized, neighb.tidy, by = "Neighborhood", match = "all")
 
 # Plot neighborhood median home value over time
 neighb_map <- ggmap(basemap) +
@@ -309,9 +309,9 @@ ggsave("plot10_time series.png", time.series, width = 6, height = 8, device = "p
 
 # Plot the neighborhoods
 sampleNeighborhoods <- ggmap(basemap) + 
-  geom_polygon(data = neighb.fort, aes(x = long, y = lat, group = group), 
+  geom_polygon(data = neighb.tidy, aes(x = long, y = lat, group = group), 
                colour = NA, fill="black", alpha = 1) +
-  geom_polygon(data = neighb.fort[which(neighb.fort$Neighborhood %in% sfForTimeSeries$Neighborhood), ], 
+  geom_polygon(data = neighb.tidy[which(neighb.tidy$Neighborhood %in% sfForTimeSeries$Neighborhood), ], 
                aes(x = long, y = lat, group = group, fill = Neighborhood), 
                colour = "black") +
   coord_map() +
