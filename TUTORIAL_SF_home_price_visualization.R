@@ -30,6 +30,7 @@ library(plyr)
 library(grid)
 library(gridExtra)
 library(reshape2)
+library(scales)
 
 # DEFINE THEMES -----------------------------------------------------------
 # The ggplot2 theme system allows you to customize most visual elements of
@@ -117,9 +118,9 @@ neighb <- readShapePoly("SF_neighborhoods")
 # Let's look at the distribution of home prices in our whole dataset by 
 # creating the plot:
 home_value_hist <- ggplot(sf, aes(SalePrice)) + 
-  geom_histogram(fill=pallete_1_colors) +
+  geom_histogram(fill=palette_1_colors) +
   xlab("Sale Price($)") + ylab("Count") +
-  scale_fill_manual(values=pallete_1_colors) +
+  scale_fill_manual(values=palette_1_colors) +
   plotTheme() + 
   labs(x="Sale Price($)", y="Count", title="Distribution of San Francisco home prices",
        subtitle="Nominal prices (2009 - 2015)", 
@@ -139,7 +140,7 @@ sf <- sf[which(sf$SalePrice < mean(sf$SalePrice) + (2.5 * sd(sf$SalePrice))), ]
 home_value_violin <- ggplot(sf, aes(x=SaleYr, y=SalePrice, fill=SaleYr)) + 
   geom_violin(color = "grey50") +
   xlab("Sale Price($)") + ylab("Count") +
-  scale_fill_manual(values=pallete_7_colors) +
+  scale_fill_manual(values=palette_7_colors) +
   stat_summary(fun.y=mean, geom="point", size=2, colour="white") +
   plotTheme() + theme(legend.position="none") +
   scale_y_continuous(labels = comma) +
@@ -185,7 +186,7 @@ prices_mapped_by_year <- ggmap(basemap) +
   coord_map() +
   mapTheme() + theme(legend.position = c(.85, .25)) +
   scale_color_gradientn("Sale Price", 
-                        colors = pallete_8_colors,
+                        colors = palette_8_colors,
                         labels = scales::dollar_format(prefix = "$")) +
   labs(title="Distribution of San Francisco home prices",
        subtitle="Nominal prices (2009 - 2015)",
@@ -203,7 +204,7 @@ prices_mapped_2009_2015 <- ggmap(basemap) +
   coord_map() +
   mapTheme() +
   scale_color_gradientn("Sale Price", 
-                        colors = pallete_8_colors,
+                        colors = palette_8_colors,
                         labels = scales::dollar_format(prefix = "$")) +
   labs(title="Distribution of San Francisco home prices",
        subtitle="Nominal prices (2009 & 2015)",
@@ -230,7 +231,7 @@ mission_mapped_by_year <- ggmap(missionBasemap) +
   coord_map() +
   mapTheme() + theme(legend.position = c(.85, .25)) +
   scale_color_gradientn("Sale Price", 
-                        colors = pallete_8_colors,
+                        colors = palette_8_colors,
                         labels = scales::dollar_format(prefix = "$")) +
   labs(title="Distribution of Mission District home prices",
        subtitle="Nominal prices (2009 - 2015)",
@@ -321,7 +322,7 @@ neighb_map <- ggmap(basemap) +
                aes(x = long, y = lat, group = group, fill = medianPrice), 
                colour = "white", alpha = 0.75, size = 0.25) + 
   scale_fill_gradientn("Neighborhood \nMedian \nSale Price", 
-                       colors = pallete_8_colors,
+                       colors = palette_8_colors,
                        labels = scales::dollar_format(prefix = "$")) +
   mapTheme() + theme(legend.position = c(.85, .25)) + coord_map() +
   facet_wrap(~SaleYr, nrow = 2) +
@@ -337,7 +338,7 @@ change_map <- ggmap(basemap) +
                aes(x = long, y = lat, group = group, fill = pctChange), 
                colour = "white", alpha = 0.75, size = 0.25) + 
   coord_map() +
-  scale_fill_gradientn("% Change", colors = pallete_8_colors,
+  scale_fill_gradientn("% Change", colors = palette_8_colors,
                        labels = scales::percent_format()) +
   mapTheme() + 
   theme(legend.position = "bottom", 
@@ -386,7 +387,7 @@ change_scatterplot <- ggplot(sf.2009, aes(x = pctChange, y = medianPrice, label 
              aes(label = Neighborhood), fill = "grey20", size = 2, color = "white") +
   geom_label(data = sf.2009[which(sf.2009$pctChange %in% topPctChange),], 
              aes(label = Neighborhood, fill = Neighborhood), size = 2, color = "white") +
-  scale_fill_manual(values=pallete_9_colors) +
+  scale_fill_manual(values=palette_9_colors) +
   geom_smooth(method = "lm", se = FALSE) +
   plotTheme() + theme(legend.position = "none") +
   scale_y_continuous(labels = dollar_format(prefix = "$")) + 
@@ -411,7 +412,7 @@ time.series <- ggplot(sfForTimeSeries, aes(x = SaleYr, group=Neighborhood)) +
     legend.position = "none",
     panel.spacing.y = unit(1, "lines")
   ) +
-  scale_fill_manual(values=pallete_8_colors) +
+  scale_fill_manual(values=palette_8_colors) +
   labs(title="Time series for highest growth neighborhoods, San Francisco",
        subtitle="Nominal prices (2009-2015); Median; Ribbon indicates 1 standard deviation",
        caption="Source: San Francisco Office of the Assessor-Recorder\n@KenSteif & @SimonKassel")
@@ -426,7 +427,7 @@ sampleNeighborhoods <- ggmap(basemap) +
                aes(x = long, y = lat, group = group, fill = Neighborhood), 
                colour = "black") +
   coord_map() +
-  scale_fill_manual(values=pallete_9_colors)+
+  scale_fill_manual(values=palette_9_colors)+
   mapTheme() + 
   theme(legend.position = "bottom", 
         legend.direction = "horizontal", 
