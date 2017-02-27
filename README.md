@@ -4,6 +4,5 @@ by [Simon Kassel](http://simonkassel.com/blog/2017/2/21/mapping-and-visualizing-
 
 Exploratory visualizations of SF home sale records from San Francisco (2009-2015)
 
-Data source: San Francisco Office of the Assessor-Recorder
+Data: San Francisco Office of the Assessor-Recorder
 
-![plot 1](Visualizing_SF_home_prices_R/plots/plot1_histogram.png)
